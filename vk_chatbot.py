@@ -16,7 +16,22 @@ class Bot:
 
     def run(self):
         for event in self.longpoller.listen():
-            print(event.message)
+            if event.message:
+                self.event_processing(event=event)
+            else:
+                print('Не умею обрабатывать такие события')
+
+
+    def event_processing(self, event):
+        message = event.message.text
+        print(message)
+        # metod = self.vk.get_api()
+        try:
+            self.vk.method(method='messages.send', values={message:message})
+        except Exception as exc:
+            print('Что-то не то мы делаем', exc)
+
+
 
 
 if __name__ == '__main__':
