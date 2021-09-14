@@ -25,19 +25,25 @@ class Bot:
 
     def event_processing(self, event):
         message = event.message.text
+        print(event)
         print(message)
         # metod = self.vk.get_api()
         try:
+            users_info = self.vk.method(method='users.get', values={'user_ids' : event.message.from_id})
+            user_name = users_info[0]['first_name']
+            print(users_info)
             self.vk.method(
                 method='messages.send',
                 values={
-                    'message' : message,
+                    'message' : f'Привет, {user_name}!',
                     'random_id' : randint(1, 2**50),
                     'peer_id' : event.message.peer_id
                 }
             )
         except Exception as exc:
             print('Что-то не то мы делаем', exc)
+
+
 
 
 
