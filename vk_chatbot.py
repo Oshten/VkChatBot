@@ -1,6 +1,7 @@
 #! engoding = utf8
 
 from vk_api import vk_api, bot_longpoll
+from random import randint
 import _key
 
 group_id = 207094096
@@ -27,7 +28,14 @@ class Bot:
         print(message)
         # metod = self.vk.get_api()
         try:
-            self.vk.method(method='messages.send', values={message:message})
+            self.vk.method(
+                method='messages.send',
+                values={
+                    'message' : message,
+                    'random_id' : randint(1, 2**50),
+                    'peer_id' : event.message.peer_id
+                }
+            )
         except Exception as exc:
             print('Что-то не то мы делаем', exc)
 
