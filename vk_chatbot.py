@@ -19,13 +19,15 @@ class Bot:
 
     def run(self):
         for event in self.longpoller.listen():
+            print(event)
             if event.type == bot_longpoll.VkBotEventType.MESSAGE_TYPING_STATE:
-                print(event)
                 user_name = self._find_username(event)
+                print(user_name)
                 if user_name:
                     self.event_processing(
                         message_answer=f'Тебя приветствую, падаван, {user_name}!',
                         event=event
+                        peer_id=
                     )
             if event.type == bot_longpoll.VkBotEventType.MESSAGE_NEW:
                 message = event.message.text
@@ -37,14 +39,14 @@ class Bot:
                 print('Не умею обрабатывать такие события', event.type)
 
 
-    def event_processing(self, message_answer, event):
+    def event_processing(self, message_answer, event, peer_id):
         try:
             self.vk.method(
                 method='messages.send',
                 values={
                     'message' : message_answer,
                     'random_id' : randint(1, 2**50),
-                    'user_id' : event.object.user_id
+                    'peer_id' : peer_id
                 }
             )
         except Exception as exc:
