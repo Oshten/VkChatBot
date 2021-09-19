@@ -20,6 +20,7 @@ class Bot:
     def run(self):
         for event in self.longpoller.listen():
             if event.type == bot_longpoll.VkBotEventType.MESSAGE_TYPING_STATE:
+                print(event)
                 user_name = self._find_username(event)
                 if user_name:
                     self.event_processing(
@@ -43,14 +44,14 @@ class Bot:
                 values={
                     'message' : message_answer,
                     'random_id' : randint(1, 2**50),
-                    'peer_id' : event.message.peer_id
+                    'user_id' : event.object.user_id
                 }
             )
         except Exception as exc:
             print('Что-то не то мы делаем', exc)
 
     def _find_username(self, event):
-        users_info = self.vk.method(method='users.get', values={'user_ids': event.message.from_id})
+        users_info = self.vk.method(method='users.get', values={'user_ids': event.object.from_id})
         users_name = None
         try:
             user_name = users_info[0]['first_name']
