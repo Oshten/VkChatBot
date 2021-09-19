@@ -17,25 +17,28 @@ class Bot:
 
     def run(self):
         for event in self.longpoller.listen():
-            if event.message:
+            if event.type == bot_longpoll.VkBotEventType.MESSAGE_NEW:
                 self.event_processing(event=event)
             else:
-                print('Не умею обрабатывать такие события')
+                print('Не умею обрабатывать такие события', event.type)
 
 
     def event_processing(self, event):
         message = event.message.text
-        print(event)
-        print(message)
-        # metod = self.vk.get_api()
         try:
-            users_info = self.vk.method(method='users.get', values={'user_ids' : event.message.from_id})
-            user_name = users_info[0]['first_name']
-            print(users_info)
+            user_name, user_lastname, answer = self._find_username(event)
+            if answer:
+                if user_name:
+                    message_answeer = f'Тебя приветствую, падаван, {user_name}!'
+                else:
+                    message_answeer = 'Тебя приветствую, падаван!\nТемны мысли твои. Кто ты?'
+            else:
+                message_answeer = f'Тебя приветствую, падаван, {user_name} {user_lastname}!'
+
             self.vk.method(
                 method='messages.send',
                 values={
-                    'message' : f'Привет, {user_name}!',
+                    'message' : message_answeer,
                     'random_id' : randint(1, 2**50),
                     'peer_id' : event.message.peer_id
                 }
@@ -43,9 +46,15 @@ class Bot:
         except Exception as exc:
             print('Что-то не то мы делаем', exc)
 
-
-
-
+    def _find_username(self, event):
+        users_info = self.vk.method(method='users.get', values={'user_ids': event.message.from_id})
+        users_name, user_lastname, answer = None, None, None
+        try:
+            user_name = users_info[0]['first_name']
+            user_lastname = users_info[0]['last_name']
+        except KeyError:
+            answer = 'Кто ты, падаван?'
+        return user_lastname, user_name, answer
 
 
 if __name__ == '__main__':
