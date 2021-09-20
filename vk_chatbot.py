@@ -19,21 +19,24 @@ class Bot:
 
     def run(self):
         for event in self.longpoller.listen():
-            print(event)
             if event.type == bot_longpoll.VkBotEventType.MESSAGE_TYPING_STATE:
                 user_name = self._find_username(event)
-                print(user_name)
-                if user_name:
+                if user_name and not self._check_username(user_name=user_name):
                     self.event_processing(
                         message_answer=f'Тебя приветствую, падаван, {user_name}!',
-                        event=event
-                        peer_id=
+                        event=event,
+                        peer_id=event.object.from_id
                     )
             if event.type == bot_longpoll.VkBotEventType.MESSAGE_NEW:
                 message = event.message.text
+                # user_name = self._find_username(event)
                 self.event_processing(
-                    message_answer='sss',
-                    event=event
+                    message_answer=self._find_message(
+                        user_name=user_name,
+                        message=message
+                    ),
+                    event=event,
+                    peer_id=event.message.peer_id
                 )
             else:
                 print('Не умею обрабатывать такие события', event.type)
