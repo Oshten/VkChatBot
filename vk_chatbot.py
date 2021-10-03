@@ -1,11 +1,18 @@
 #! engoding = utf8
 
+import logging
 from vk_api import vk_api, bot_longpoll
 from random import randint
 import _key
 
 group_id = 207094096
 token = _key._access_key
+
+def make_log():
+    log=logging.getLogger("bot")
+    consol_log = logging.StreamHandler()
+    consol_format = logging.Formatter('')
+
 
 class Bot:
 
@@ -101,6 +108,7 @@ class Bot:
 
 
 if __name__ == '__main__':
+    make_log()
     bot = Bot(token=token, group_id=group_id)
     bot.run()
 
