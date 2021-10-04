@@ -10,8 +10,12 @@ token = _key._access_key
 
 def make_log():
     log=logging.getLogger("bot")
-    consol_log = logging.StreamHandler()
-    consol_format = logging.Formatter('')
+
+    consol_log = logging.FileHandler('bot.log')
+    consol_format = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    consol_log.setFormatter(consol_format)
+    log.setLevel(logging.DEBUG)
+    log.addHandler(consol_log)
 
 
 class Bot:
@@ -26,15 +30,20 @@ class Bot:
 
     def run(self):
         for event in self.longpoller.listen():
+            logging.info('Получено событие %s' %event.type)
             if event.type == bot_longpoll.VkBotEventType.MESSAGE_TYPING_STATE:
+                logging.debug('Нам кто-то пишет')
                 user_name = self._find_username(event)
+                logging.info('Имя пользователя - %s' %user_name)
                 if user_name and not self._check_username(user_name=user_name):
+                    logging.debug('Приветствие пользователя')
                     self.event_processing(
                         message_answer=f'Тебя приветствую, падаван, {user_name}!',
                         event=event,
                         peer_id=event.object.from_id
                     )
             if event.type == bot_longpoll.VkBotEventType.MESSAGE_NEW:
+                logging.debug('Получено сообщение')
                 message = event.message.text
                 # user_name = self._find_username(event)
                 self.event_processing(
@@ -46,7 +55,7 @@ class Bot:
                     peer_id=event.message.peer_id
                 )
             else:
-                print('Не умею обрабатывать такие события', event.type)
+                logging.debug('Не умею обрабатывать такие события', event.type)
 
 
     def event_processing(self, message_answer, event, peer_id):
@@ -108,7 +117,7 @@ class Bot:
 
 
 if __name__ == '__main__':
-    make_log()
     bot = Bot(token=token, group_id=group_id)
+    make_log()
     bot.run()
 
