@@ -8,14 +8,14 @@ import _key
 group_id = 207094096
 token = _key._access_key
 
-def make_log():
-    log=logging.getLogger("bot")
+# def make_log():
+log=logging.getLogger("bot")
 
-    consol_log = logging.FileHandler('bot.log')
-    consol_format = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-    consol_log.setFormatter(consol_format)
-    log.setLevel(logging.DEBUG)
-    log.addHandler(consol_log)
+consol_log = logging.FileHandler('bot.log', 'w', 'utf-8')
+consol_format = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+consol_log.setFormatter(consol_format)
+log.setLevel(logging.DEBUG)
+log.addHandler(consol_log)
 
 
 class Bot:
@@ -30,20 +30,20 @@ class Bot:
 
     def run(self):
         for event in self.longpoller.listen():
-            logging.info('Получено событие %s' %event.type)
+            log.info('Получено событие %s' %event.type)
             if event.type == bot_longpoll.VkBotEventType.MESSAGE_TYPING_STATE:
-                logging.debug('Нам кто-то пишет')
+                log.debug('Нам кто-то пишет')
                 user_name = self._find_username(event)
-                logging.info('Имя пользователя - %s' %user_name)
+                log.info('Имя пользователя - %s' %user_name)
                 if user_name and not self._check_username(user_name=user_name):
-                    logging.debug('Приветствие пользователя')
+                    log.debug('Приветствие пользователя')
                     self.event_processing(
                         message_answer=f'Тебя приветствую, падаван, {user_name}!',
                         event=event,
                         peer_id=event.object.from_id
                     )
             if event.type == bot_longpoll.VkBotEventType.MESSAGE_NEW:
-                logging.debug('Получено сообщение')
+                log.debug('Получено сообщение')
                 message = event.message.text
                 # user_name = self._find_username(event)
                 self.event_processing(
@@ -55,7 +55,7 @@ class Bot:
                     peer_id=event.message.peer_id
                 )
             else:
-                logging.debug('Не умею обрабатывать такие события', event.type)
+                log.debug('Не умею обрабатывать такие события - %s' %event.type)
 
 
     def event_processing(self, message_answer, event, peer_id):
@@ -68,28 +68,32 @@ class Bot:
                     'peer_id' : peer_id
                 }
             )
-        except Exception as exc:
-            print('Что-то не то мы делаем', exc)
+        except Exception:
+            log.exception('Что-то не то мы делаем')
 
     def _find_username(self, event):
         users_info = self.vk.method(method='users.get', values={'user_ids': event.object.from_id})
-        users_name = None
+        user_name = None
         try:
             user_name = users_info[0]['first_name']
             user_name += ' ' + users_info[0]['last_name']
+            log.debug('Определяем имя и фамилию пользователя - %s' %user_name)
         except KeyError:
             if user_name:
-                print ('Фамилия не указана')
+                log.debug('Фамилия не указана')
             else:
-                print('Имя и фамилия не указаны')
+                log.debug('Имя и фамилия не указаны')
         return user_name
 
     def _check_username(self, user_name):
         if user_name in self.base_names:
+            log.debug('Пользователь в базе присутствует')
             return True
         elif user_name:
             self.base_names.append(user_name)
+            log.debug('Добавляем нового пользователя')
             return False
+        log.debug('Пользователь не определен')
         return False
 
     def _find_message(self, user_name, message):
@@ -97,15 +101,20 @@ class Bot:
         result_check_message = self._check_message(message=message)
         if result_check_username:
             if not result_check_message:
-                get_message = message.strip().replace(',', '').replace('.', '').replace('бот', '')
+                get_message = message.strip().replace(',', '').replace('.', '').replace('бот', '').replace('!', '')
+                log.debug('Сообщение пользователя - %s' %get_message)
                 message_list = get_message.lower().split(' ')[::-1]
                 message_list[0] = message_list[0].title()
                 messege_answer = ' '.join(message_list) + ', падаван.'
+                log.debug('Сформированно сообщение - %s' %messege_answer)
             elif result_check_message == 'question_who':
+                log.debug('Пользователь интересуется ботом')
                 messege_answer = 'Йодабот я, падаван.'
         elif not user_name:
+            log.debug('Имя не определено')
             messege_answer = 'Темны мысли твои. Кто ты?'
         else:
+            log.debug('Приветствует первым')
             message_answer = f'Тебя приветствую, падаван, {user_name}!'
         return messege_answer
 
@@ -117,7 +126,7 @@ class Bot:
 
 
 if __name__ == '__main__':
+    # make_log()
     bot = Bot(token=token, group_id=group_id)
-    make_log()
     bot.run()
 
