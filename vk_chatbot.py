@@ -12,7 +12,7 @@ log = logging.getLogger("bot")
 
 def configure_loging():
     consol_log = logging.FileHandler('bot.log', 'w', 'utf-8')
-    consol_format = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    consol_format = logging.Formatter(fmt='%(asctime)s - %(levelname)s - %(message)s', datefmt='%d-%m-%Y %H:%m')
     consol_log.setFormatter(consol_format)
     consol_log.setLevel(logging.DEBUG)
     log.addHandler(consol_log)
