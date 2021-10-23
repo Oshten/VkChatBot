@@ -8,22 +8,22 @@ import _key
 group_id = 207094096
 token = _key._access_key
 
-# def make_log():
 log = logging.getLogger("bot")
-consol_log = logging.FileHandler('bot.log', 'w', 'utf-8')
-consol_format = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-consol_log.setFormatter(consol_format)
-consol_log.setLevel(logging.DEBUG)
-log.addHandler(consol_log)
 
-# log = logging.getLogger('bot_info')
-stream_log = logging.StreamHandler()
-stream_format = logging.Formatter('%(levelname)s - %(message)s')
-stream_log.setFormatter(stream_format)
-stream_log.setLevel(logging.INFO)
+def configure_loging():
+    consol_log = logging.FileHandler('bot.log', 'w', 'utf-8')
+    consol_format = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    consol_log.setFormatter(consol_format)
+    consol_log.setLevel(logging.DEBUG)
+    log.addHandler(consol_log)
 
-log.setLevel(logging.DEBUG)
-log.addHandler(stream_log)
+    stream_log = logging.StreamHandler()
+    stream_format = logging.Formatter('%(levelname)s - %(message)s')
+    stream_log.setFormatter(stream_format)
+    stream_log.setLevel(logging.INFO)
+
+    log.setLevel(logging.DEBUG)
+    log.addHandler(stream_log)
 
 
 
@@ -135,7 +135,7 @@ class Bot:
 
 
 if __name__ == '__main__':
-    # make_log()
+    configure_loging()
     bot = Bot(token=token, group_id=group_id)
     bot.run()
 
