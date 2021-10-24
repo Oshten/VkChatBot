@@ -1,29 +1,34 @@
 #! engoding = utf8
 
-import logging
+import logging, logging.config
 from vk_api import vk_api, bot_longpoll
 from random import randint
 import _key
+from log_config import bot_log_config
 
 group_id = 207094096
 token = _key._access_key
 
-log = logging.getLogger("bot")
+logging.config.dictConfig(bot_log_config)
+log = logging.getLogger('bot')
+# log.setLevel(logging.DEBUG)
+# log.addHandler('stream_handler')
+# log.addHandler('consol_handler')
 
-def configure_loging():
-    consol_log = logging.FileHandler('bot.log', 'w', 'utf-8')
-    consol_format = logging.Formatter(fmt='%(asctime)s - %(levelname)s - %(message)s', datefmt='%d-%m-%Y %H:%m')
-    consol_log.setFormatter(consol_format)
-    consol_log.setLevel(logging.DEBUG)
-    log.addHandler(consol_log)
-
-    stream_log = logging.StreamHandler()
-    stream_format = logging.Formatter('%(levelname)s - %(message)s')
-    stream_log.setFormatter(stream_format)
-    stream_log.setLevel(logging.INFO)
-
-    log.setLevel(logging.DEBUG)
-    log.addHandler(stream_log)
+# def configure_loging():
+#     consol_log = logging.FileHandler('bot.log', 'w', 'utf-8')
+#     consol_format = logging.Formatter(fmt='%(asctime)s - %(levelname)s - %(message)s', datefmt='%d-%m-%Y %H:%m')
+#     consol_log.setFormatter(consol_format)
+#     consol_log.setLevel(logging.DEBUG)
+#     log.addHandler(consol_log)
+#
+#     stream_log = logging.StreamHandler()
+#     stream_format = logging.Formatter('%(levelname)s - %(message)s')
+#     stream_log.setFormatter(stream_format)
+#     stream_log.setLevel(logging.INFO)
+#
+#     log.setLevel(logging.DEBUG)
+#     log.addHandler(stream_log)
 
 
 
@@ -43,7 +48,6 @@ class Bot:
             if event.type == bot_longpoll.VkBotEventType.MESSAGE_TYPING_STATE:
                 log.debug('Нам кто-то пишет')
                 user_name = self._find_username(event)
-                log.info('Имя пользователя - %s' %user_name)
                 if user_name and not self._check_username(user_name=user_name):
                     log.debug('Приветствие пользователя')
                     self.event_processing(
@@ -54,7 +58,7 @@ class Bot:
             if event.type == bot_longpoll.VkBotEventType.MESSAGE_NEW:
                 log.debug('Получено сообщение')
                 message = event.message.text
-                # user_name = self._find_username(event)
+                log.debug('Отправляем ответ')
                 self.event_processing(
                     message_answer=self._find_message(
                         user_name=user_name,
@@ -64,7 +68,7 @@ class Bot:
                     peer_id=event.message.peer_id
                 )
             else:
-                log.debug('Не умею обрабатывать такие события - %s' %event.type)
+                log.info('Не умею обрабатывать такие события - %s' %event.type)
 
 
     def event_processing(self, message_answer, event, peer_id):
@@ -77,6 +81,7 @@ class Bot:
                     'peer_id' : peer_id
                 }
             )
+            log.info('Отправляю сообщение - %s' %message_answer)
         except Exception:
             log.exception('Что-то не то мы делаем')
 
@@ -135,7 +140,7 @@ class Bot:
 
 
 if __name__ == '__main__':
-    configure_loging()
+    # configure_loging()
     bot = Bot(token=token, group_id=group_id)
     bot.run()
 

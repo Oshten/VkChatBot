@@ -14,23 +14,24 @@ bot_log_config = {
     'handlers': {
         'stream_handler': {
             'class': 'logging.StreamHandler',
-            'level': 'logging.INFO',
+            'level': 'INFO',
             'formatter': 'stream_format'
         },
         'consol_handler': {
             'class': 'logging.FileHandler',
-            'level': 'logging.DEBUG',
+            'level': 'DEBUG',
             'formatter': 'consol_format',
             'filename': 'bot.log',
             'encoding': 'UTF8'
         }
     },
     'loggers': {
-        'log': {
+        'bot': {
             'handlers': [
                 'stream_handler',
                 'consol_handler'
-            ]
+            ],
+            'level': 'DEBUG',
         }
     }
 }
