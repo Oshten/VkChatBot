@@ -11,30 +11,19 @@ token = _key._access_key
 
 logging.config.dictConfig(bot_log_config)
 log = logging.getLogger('bot')
-# log.setLevel(logging.DEBUG)
-# log.addHandler('stream_handler')
-# log.addHandler('consol_handler')
-
-# def configure_loging():
-#     consol_log = logging.FileHandler('bot.log', 'w', 'utf-8')
-#     consol_format = logging.Formatter(fmt='%(asctime)s - %(levelname)s - %(message)s', datefmt='%d-%m-%Y %H:%m')
-#     consol_log.setFormatter(consol_format)
-#     consol_log.setLevel(logging.DEBUG)
-#     log.addHandler(consol_log)
-#
-#     stream_log = logging.StreamHandler()
-#     stream_format = logging.Formatter('%(levelname)s - %(message)s')
-#     stream_log.setFormatter(stream_format)
-#     stream_log.setLevel(logging.INFO)
-#
-#     log.setLevel(logging.DEBUG)
-#     log.addHandler(stream_log)
-
-
 
 class Bot:
+    """
+    Echo bot for group vk.com
+    Use python 3.8
+    """
 
     def __init__(self, token, group_id):
+        '''
+
+        :param token: sekret token for group vk.com.
+        :param group_id: id for group vk.com
+        '''
         self.token = token
         self.group_id = group_id
         self.vk = vk_api.VkApi(token=self.token)
@@ -43,6 +32,7 @@ class Bot:
         # TODO Добавить время отключения
 
     def run(self):
+        '''Start bot'''
         for event in self.longpoller.listen():
             log.info('Получено событие %s' %event.type)
             if event.type == bot_longpoll.VkBotEventType.MESSAGE_TYPING_STATE:
@@ -72,6 +62,13 @@ class Bot:
 
 
     def event_processing(self, message_answer, event, peer_id):
+        '''
+
+        :param message_answer: message to send
+        :param event: VkBotEvent(object)
+        :param peer_id: id recipient in vk.com
+        :return: users name
+        '''
         try:
             self.vk.method(
                 method='messages.send',
@@ -86,6 +83,11 @@ class Bot:
             log.exception('Что-то не то мы делаем')
 
     def _find_username(self, event):
+        '''
+
+        :param event: VkBotEvent(object)
+        :return: users name
+        '''
         users_info = self.vk.method(method='users.get', values={'user_ids': event.object.from_id})
         user_name = None
         try:
@@ -100,6 +102,11 @@ class Bot:
         return user_name
 
     def _check_username(self, user_name):
+        '''
+
+        :param user_name: users name
+        :return: true if user known or false if user don't known
+        '''
         if user_name in self.base_names:
             log.debug('Пользователь в базе присутствует')
             return True
@@ -111,6 +118,12 @@ class Bot:
         return False
 
     def _find_message(self, user_name, message):
+        '''
+
+        :param user_name: users name
+        :param message: users message
+        :return: message to send
+        '''
         result_check_username = self._check_username(user_name=user_name)
         result_check_message = self._check_message(message=message)
         if result_check_username:
@@ -133,6 +146,11 @@ class Bot:
         return messege_answer
 
     def _check_message(self, message):
+        '''
+
+        :param message: users message
+        :return: answer to question 'who is you' or false
+        '''
         if 'кто' and 'ты' in message.lower():
             return 'question_who'
         return False
@@ -140,7 +158,6 @@ class Bot:
 
 
 if __name__ == '__main__':
-    # configure_loging()
     bot = Bot(token=token, group_id=group_id)
     bot.run()
 
