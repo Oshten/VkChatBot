@@ -3,11 +3,13 @@
 import logging, logging.config
 from vk_api import vk_api, bot_longpoll
 from random import randint
-import _key
 from log_config import bot_log_config
 
-group_id = 207094096
-token = _key._access_key
+try:
+    import settings
+except ImportError:
+    exit('Do cp settings.py.default settings.py, change group_id and set token')
+
 
 logging.config.dictConfig(bot_log_config)
 log = logging.getLogger('bot')
@@ -158,6 +160,6 @@ class Bot:
 
 
 if __name__ == '__main__':
-    bot = Bot(token=token, group_id=group_id)
+    bot = Bot(token=settings.TOKEN, group_id=settings.GROP_ID)
     bot.run()
 
