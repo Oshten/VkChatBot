@@ -31,6 +31,7 @@ class Bot:
         self.vk = vk_api.VkApi(token=self.token)
         self.longpoller = bot_longpoll.VkBotLongPoll(vk=self.vk, group_id=group_id, wait=60)
         self.base_names = []
+        self.user_name = None
         # TODO Добавить время отключения
 
     def run(self):
@@ -39,23 +40,22 @@ class Bot:
             log.info('Получено событие %s' %event.type)
             if event.type == bot_longpoll.VkBotEventType.MESSAGE_TYPING_STATE:
                 log.debug('Нам кто-то пишет')
-                user_name = self._find_username(event)
-                if user_name and not self._check_username(user_name=user_name):
+                if self._find_username(event) and not self._check_username():
                     log.debug('Приветствие пользователя')
                     self.event_processing(
-                        message_answer=f'Тебя приветствую, падаван, {user_name}!',
+                        message_answer=f'Тебя приветствую, падаван, {self.user_name}!',
                         event=event,
                         peer_id=event.object.from_id
                     )
             if event.type == bot_longpoll.VkBotEventType.MESSAGE_NEW:
                 log.debug('Получено сообщение')
                 message = event.message.text
+                if not self.user_name:
+                    self._find_username(event)
+                message_answer = self._find_message(message=message)
                 log.debug('Отправляем ответ')
                 self.event_processing(
-                    message_answer=self._find_message(
-                        user_name=user_name,
-                        message=message
-                    ),
+                    message_answer=message_answer,
                     event=event,
                     peer_id=event.message.peer_id
                 )
@@ -65,11 +65,10 @@ class Bot:
 
     def event_processing(self, message_answer, event, peer_id):
         '''
-
         :param message_answer: message to send
         :param event: VkBotEvent(object)
         :param peer_id: id recipient in vk.com
-        :return: users name
+        :return: None
         '''
         try:
             self.vk.method(
@@ -84,72 +83,70 @@ class Bot:
         except Exception:
             log.exception('Что-то не то мы делаем')
 
-    def _find_username(self, event):
+    def _find_username(self, event): #TODO Отладить метод нахождения имени для других сообщений
         '''
-
         :param event: VkBotEvent(object)
         :return: users name
         '''
-        users_info = self.vk.method(method='users.get', values={'user_ids': event.object.from_id})
-        user_name = None
+        if event.type == bot_longpoll.VkBotEventType.MESSAGE_TYPING_STATE:
+            value = {'user_ids': event.object.from_id}
+        elif event.type == bot_longpoll.VkBotEventType.MESSAGE_NEW:
+            value = {'user_ids': event.object.message['from_id']}
+        users_info = self.vk.method(method='users.get', values=value)
+        log.info(users_info)
         try:
-            user_name = users_info[0]['first_name']
-            user_name += ' ' + users_info[0]['last_name']
-            log.debug('Определяем имя и фамилию пользователя - %s' %user_name)
+            self.user_name = users_info[0]['first_name']
+            self.user_name += ' ' + users_info[0]['last_name']
+            log.debug('Определяем имя и фамилию пользователя - %s' %self.user_name)
         except KeyError:
-            if user_name:
+            if self.user_name:
                 log.debug('Фамилия не указана')
             else:
                 log.debug('Имя и фамилия не указаны')
-        return user_name
+        return self.user_name
 
-    def _check_username(self, user_name):
+    def _check_username(self):
         '''
-
-        :param user_name: users name
         :return: true if user known or false if user don't known
         '''
-        if user_name in self.base_names:
+        if self.user_name in self.base_names:
             log.debug('Пользователь в базе присутствует')
             return True
-        elif user_name:
-            self.base_names.append(user_name)
+        elif self.user_name:
+            self.base_names.append(self.user_name)
             log.debug('Добавляем нового пользователя')
             return False
         log.debug('Пользователь не определен')
         return False
 
-    def _find_message(self, user_name, message):
+    def _find_message(self, message):
         '''
-
-        :param user_name: users name
         :param message: users message
         :return: message to send
         '''
-        result_check_username = self._check_username(user_name=user_name)
+        result_check_username = self._check_username()
         result_check_message = self._check_message(message=message)
         if result_check_username:
             if not result_check_message:
-                get_message = message.strip().replace(',', '').replace('.', '').replace('бот', '').replace('!', '')
+                get_message = message.strip().replace(',', '').replace('.', '').replace('бот', '').replace('!', '').replace('?', '')
                 log.debug('Сообщение пользователя - %s' %get_message)
                 message_list = get_message.lower().split(' ')[::-1]
                 message_list[0] = message_list[0].title()
-                messege_answer = ' '.join(message_list) + ', падаван.'
-                log.debug('Сформированно сообщение - %s' %messege_answer)
+                message_answer = ' '.join(message_list) + ', падаван.'
+                log.debug('Сформированно сообщение - %s' %message_answer)
             elif result_check_message == 'question_who':
                 log.debug('Пользователь интересуется ботом')
-                messege_answer = 'Йодабот я, падаван.'
-        elif not user_name:
+                message_answer = 'Йодабот я, падаван.'
+        elif not self.user_name:
             log.debug('Имя не определено')
-            messege_answer = 'Темны мысли твои. Кто ты?'
+            message_answer = 'Темны мысли твои. Кто ты?'
         else:
             log.debug('Приветствует первым')
-            message_answer = f'Тебя приветствую, падаван, {user_name}!'
-        return messege_answer
+            message_answer = f'Тебя приветствую, падаван, {self.user_name}!'
+        return message_answer
 
     def _check_message(self, message):
         '''
-
         :param message: users message
         :return: answer to question 'who is you' or false
         '''
