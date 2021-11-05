@@ -57,6 +57,7 @@ class Test_bot(TestCase):
                     bot.event_processing.assert_called()
                     self.assertEqual(bot.event_processing.call_count, count)
 
+
     def test_run_all_message(self):  # Проверка что функция run не вызывает следующую функцию
         event_types = [
             'message_reply',
@@ -85,6 +86,7 @@ class Test_bot(TestCase):
 
                     self.assertEqual(bot.event_processing.assert_not_called(), None)
 
+
     def test_event_processing(self):
         message_answer = 'Привет, падаван'
         peer_id = 38123382
@@ -112,6 +114,7 @@ class Test_bot(TestCase):
                 bot.vk.method.assert_called()
                 self.assertEqual(bot.vk.method.call_count, len(events))
 
+
     def test_find_username_start_request(self):
         events = [
             VkBotEvent(RAW_EVENT_MESSAGE_NEW),
@@ -134,6 +137,7 @@ class Test_bot(TestCase):
                 bot.vk.method.assert_called()
                 self.assertEqual(bot.vk.method.call_count, len(events))
 
+
     def test_find_full_username(self):
         event = VkBotEvent(RAW_EVENT_MESSAGE_NEW)
 
@@ -144,6 +148,7 @@ class Test_bot(TestCase):
 
                 user_name = bot._find_username(event)
                 self.assertEqual(user_name, 'Руслан Ильин')
+
 
     def test_find_first_username(self):
         event = VkBotEvent(RAW_EVENT_MESSAGE_NEW)
@@ -156,6 +161,7 @@ class Test_bot(TestCase):
                 user_name = bot._find_username(event)
                 self.assertEqual(user_name, 'Руслан')
 
+
     def test_find_not_username(self):
         event = VkBotEvent(RAW_EVENT_MESSAGE_NEW)
 
@@ -166,6 +172,43 @@ class Test_bot(TestCase):
 
                 user_name = bot._find_username(event)
                 self.assertEqual(user_name, None)
+
+
+    def test_check_username(self):
+
+        with patch('vk_chatbot.vk_api.VkApi'):
+            with patch('vk_chatbot.bot_longpoll.VkBotLongPoll'):
+                bot = Bot('', '')
+                resalt = bot._check_username()
+                self.assertEqual(resalt, False)
+                self.assertEqual(len(bot.base_names), 0)
+
+                bot.user_name = 'Вася Пупкин'
+                resalt = bot._check_username()
+                self.assertEqual(resalt, False)
+                self.assertEqual(len(bot.base_names), 1)
+
+                resalt = bot._check_username()
+                self.assertEqual(resalt, True)
+
+    def test_find_message(self):
+
+        with patch('vk_chatbot.vk_api.VkApi'):
+            with patch('vk_chatbot.bot_longpoll.VkBotLongPoll'):
+                bot = Bot('', '')
+                resalt = bot._find_message(message='Привет, бот.')
+                self.assertEqual(resalt, 'Темны мысли твои. Кто ты?')
+
+                bot.user_name = 'Вася Пупкин'
+                resalt = bot._find_message(message='Привет, бот.')
+                self.assertEqual(resalt, f'Тебя приветствую, падаван, {bot.user_name}!')
+
+                resalt = bot._find_message(message='Началась клоническая война')
+                self.assertEqual(resalt, 'Война клоническая началась, падаван.')
+
+
+
+
 
 
 
