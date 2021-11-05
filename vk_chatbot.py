@@ -22,7 +22,6 @@ class Bot:
 
     def __init__(self, token, group_id):
         '''
-
         :param token: sekret token for group vk.com.
         :param group_id: id for group vk.com
         '''
@@ -83,7 +82,7 @@ class Bot:
         except Exception:
             log.exception('Что-то не то мы делаем')
 
-    def _find_username(self, event): #TODO Отладить метод нахождения имени для других сообщений
+    def _find_username(self, event):
         '''
         :param event: VkBotEvent(object)
         :return: users name

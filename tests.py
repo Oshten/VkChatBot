@@ -1,8 +1,11 @@
 import logging
 from unittest import TestCase
-from unittest.mock import patch, Mock
+from unittest.mock import patch, Mock, ANY
+
+from vk_api.bot_longpoll import VkBotEvent
 
 from vk_chatbot import Bot
+from raw_event import RAW_EVENT_MESSAGE_NEW, RAW_EVENT_MESSAGE_TYPING_STATE, INFO_USERS
 
 
 class Test_bot(TestCase):
@@ -81,6 +84,108 @@ class Test_bot(TestCase):
                     bot.run()
 
                     self.assertEqual(bot.event_processing.assert_not_called(), None)
+
+    def test_event_processing(self):
+        message_answer = 'Привет, падаван'
+        peer_id = 38123382
+
+        events = [
+            VkBotEvent(RAW_EVENT_MESSAGE_NEW),
+            VkBotEvent(RAW_EVENT_MESSAGE_TYPING_STATE)
+        ]
+
+        with patch('vk_chatbot.vk_api.VkApi') as vk:
+            with patch('vk_chatbot.bot_longpoll.VkBotLongPoll'):
+                bot = Bot('', '')
+                vk.method = Mock()
+                for event in events:
+                    bot.event_processing(message_answer=message_answer, event=event, peer_id=peer_id)
+
+                    bot.vk.method.assert_called_with(
+                        method='messages.send',
+                        values={
+                            'message': message_answer,
+                            'random_id': ANY,
+                            'peer_id': peer_id
+                        }
+                    )
+                bot.vk.method.assert_called()
+                self.assertEqual(bot.vk.method.call_count, len(events))
+
+    def test_find_username_start_request(self):
+        events = [
+            VkBotEvent(RAW_EVENT_MESSAGE_NEW),
+            VkBotEvent(RAW_EVENT_MESSAGE_TYPING_STATE),
+        ]
+        values = [
+            {'user_ids': VkBotEvent(RAW_EVENT_MESSAGE_NEW).object.message['from_id']},
+            {'user_ids': VkBotEvent(RAW_EVENT_MESSAGE_TYPING_STATE).object.from_id}
+        ]
+
+        with patch('vk_chatbot.vk_api.VkApi') as vk:
+            with patch('vk_chatbot.bot_longpoll.VkBotLongPoll'):
+                bot = Bot('', '')
+                vk.method = Mock()
+
+                for event, value in zip(events, values):
+                    bot._find_username(event)
+                    bot.vk.method.assert_called_with(method='users.get', values=value)
+
+                bot.vk.method.assert_called()
+                self.assertEqual(bot.vk.method.call_count, len(events))
+
+    def test_find_full_username(self):
+        event = VkBotEvent(RAW_EVENT_MESSAGE_NEW)
+
+        with patch('vk_chatbot.vk_api.VkApi') as vk:
+            with patch('vk_chatbot.bot_longpoll.VkBotLongPoll'):
+                bot = Bot('', '')
+                bot.vk.method = Mock(return_value=INFO_USERS[0])
+
+                user_name = bot._find_username(event)
+                self.assertEqual(user_name, 'Руслан Ильин')
+
+    def test_find_first_username(self):
+        event = VkBotEvent(RAW_EVENT_MESSAGE_NEW)
+
+        with patch('vk_chatbot.vk_api.VkApi') as vk:
+            with patch('vk_chatbot.bot_longpoll.VkBotLongPoll'):
+                bot = Bot('', '')
+                bot.vk.method = Mock(return_value=INFO_USERS[1])
+
+                user_name = bot._find_username(event)
+                self.assertEqual(user_name, 'Руслан')
+
+    def test_find_not_username(self):
+        event = VkBotEvent(RAW_EVENT_MESSAGE_NEW)
+
+        with patch('vk_chatbot.vk_api.VkApi') as vk:
+            with patch('vk_chatbot.bot_longpoll.VkBotLongPoll'):
+                bot = Bot('', '')
+                bot.vk.method = Mock(return_value=INFO_USERS[2])
+
+                user_name = bot._find_username(event)
+                self.assertEqual(user_name, None)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
