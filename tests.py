@@ -206,6 +206,9 @@ class Test_bot(TestCase):
                 resalt = bot._find_message(message='Началась клоническая война')
                 self.assertEqual(resalt, 'Война клоническая началась, падаван.')
 
+                resalt = bot._find_message(message='Кто ты?')
+                self.assertEqual(resalt, 'Йодабот я, падаван.')
+
 
 
 
